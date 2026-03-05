@@ -41,13 +41,13 @@ jobs:
       - name: Correct MacOS lib name
         if: runner.os == 'MacOS'
         run: |
-          mv src-rust/target/release/libpty.dylib libpty_$(uname -m).dylib
+          mv src-rust/target/release/libdeno_webmidi_ffi.dylib libdeno_webmidi_ffi_$(uname -m).dylib
 
       - name: Upload MacOS lib
         if: runner.os == 'MacOS'
         uses: svenstaro/upload-release-action@v2
         with:
-          file: libpty_*.dylib
+          file: libdeno_webmidi_ffi_*.dylib
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
@@ -55,13 +55,13 @@ jobs:
       - name: Correct linux lib name
         if: runner.os == 'Linux'
         run: |
-          mv src-rust/target/release/libpty.so libpty_$(uname -m).so
+          mv src-rust/target/release/libdeno_webmidi_ffi.so libdeno_webmidi_ffi_$(uname -m).so
 
       - name: Upload Linux lib
         if: runner.os == 'Linux'
         uses: svenstaro/upload-release-action@v2
         with:
-          file: libpty_*.so
+          file: libdeno_webmidi_ffi_*.so
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
@@ -70,6 +70,6 @@ jobs:
         if: runner.os == 'Windows'
         uses: svenstaro/upload-release-action@v2
         with:
-          file: src-rust/target/release/pty.dll
+          file: src-rust/target/release/deno_webmidi_ffi.dll
           tag: ${{ github.ref }}
           overwrite: true

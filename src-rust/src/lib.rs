@@ -1,9 +1,8 @@
 use midir::{Ignore, MidiInput, MidiInputConnection, MidiOutput, MidiOutputConnection};
 use once_cell::sync::Lazy;
-use parking_lot::RwLock;
+use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::ffi::{c_char, c_void, CStr, CString};
-use std::sync::{Arc, Mutex};
 
 // Port callback typedef: fn(id, name, is_input)
 pub type PortCallback = extern "C" fn(*const c_char, *const c_char, bool);
@@ -12,7 +11,7 @@ pub type PortCallback = extern "C" fn(*const c_char, *const c_char, bool);
 pub type MessageCallback = extern "C" fn(*const c_char, *const u8, usize, u64);
 
 // Global state (similar to Firefox's MIDIPlatformService)
-static MANAGER: Lazy<RwLock<MidiManager>> = Lazy::new(|| RwLock::new(MidiManager::new()));
+static MANAGER: Lazy<Mutex<MidiManager>> = Lazy::new(|| Mutex::new(MidiManager::new()));
 
 struct PortInfo {
     id: String,
@@ -43,7 +42,7 @@ impl MidiManager {
 /// Initialize the MIDI system. Returns true on success.
 #[no_mangle]
 pub extern "C" fn midir_impl_init(add_port_cb: PortCallback) -> bool {
-    let mut manager = MANAGER.write();
+    let mut manager = MANAGER.lock();
 
     // Enumerate input ports
     if let Ok(input) = MidiInput::new("deno-webmidi") {
@@ -96,7 +95,7 @@ pub extern "C" fn midir_impl_init(add_port_cb: PortCallback) -> bool {
 #[no_mangle]
 pub extern "C" fn midir_impl_refresh(add_cb: PortCallback, remove_cb: PortCallback) {
     // Implementation similar to init but diffing against existing ports
-    let mut manager = MANAGER.write();
+    let mut manager = MANAGER.lock();
 
     // Clear and re-enumerate (simpler approach)
     for (id, info) in &manager.input_ports {
@@ -132,7 +131,7 @@ pub extern "C" fn midir_impl_open_port(
         CStr::from_ptr(port_id).to_string_lossy().to_string()
     };
 
-    let mut manager = MANAGER.write();
+    let mut manager = MANAGER.lock();
 
     if port_id_str.starts_with("input-") {
         // Find the port index
@@ -162,10 +161,15 @@ pub extern "C" fn midir_impl_open_port(
                         let micros = ((timestamp as f64) * 1_000_000.0) as u64;
 
                         // Get callback from global
-                        let cb = MANAGER.read().message_callback.unwrap();
-                        let id_c = CString::new(port_id_for_closure.clone()).unwrap();
+                        let callback = {
+                            let manager = MANAGER.lock();
+                            manager.message_callback
+                        };
 
-                        cb(id_c.as_ptr(), message.as_ptr(), message.len(), micros);
+                        if let Some(cb) = callback {
+                            let id_c = CString::new(port_id_for_closure.clone()).unwrap();
+                            cb(id_c.as_ptr(), message.as_ptr(), message.len(), micros);
+                        }
                     },
                     (),
                 );
@@ -217,7 +221,7 @@ pub extern "C" fn midir_impl_close_port(port_id: *const c_char) -> bool {
         CStr::from_ptr(port_id).to_string_lossy().to_string()
     };
 
-    let mut manager = MANAGER.write();
+    let mut manager = MANAGER.lock();
 
     if port_id_str.starts_with("input-") {
         // Drop connection (implicitly closes)
@@ -239,7 +243,7 @@ pub extern "C" fn midir_impl_send(port_id: *const c_char, data: *const u8, len: 
         CStr::from_ptr(port_id).to_string_lossy().to_string()
     };
 
-    let mut manager = MANAGER.write();
+    let mut manager = MANAGER.lock();
 
     if let Some(conn) = manager.active_outputs.get_mut(&port_id_str) {
         let message = unsafe { std::slice::from_raw_parts(data, len) };
@@ -253,7 +257,7 @@ pub extern "C" fn midir_impl_send(port_id: *const c_char, data: *const u8, len: 
 /// Shutdown the MIDI system
 #[no_mangle]
 pub extern "C" fn midir_impl_shutdown() {
-    let mut manager = MANAGER.write();
+    let mut manager = MANAGER.lock();
     manager.active_inputs.clear();
     manager.active_outputs.clear();
     manager.input_ports.clear();

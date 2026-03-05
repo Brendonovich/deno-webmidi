@@ -36,7 +36,7 @@ deno-webmidi/
 
 ```bash
 # Build the Rust FFI library
-cd ffi && cargo build --release
+cd src-rust && cargo build --release
 
 # Or use the task
 deno task build

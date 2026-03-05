@@ -1,18 +1,18 @@
 {
-  "name": "@brendonovich/webmidi",
-  "version": "0.0.1",
-  "exports": "./src/mod.ts",
-  "tasks": {
-    "build": "cd ffi && cargo build --release",
-    "dev": "deno run --allow-ffi --allow-read --unstable-ffi examples/basic.ts"
-  },
-  "compilerOptions": {
-    "strict": true
-  },
-  "fmt": {
-    "useTabs": false,
-    "lineWidth": 100,
-    "indentWidth": 2,
-    "semiColons": true
-  }
+	"name": "@brendonovich/webmidi",
+	"version": "0.0.1",
+	"exports": "./src/mod.ts",
+	"tasks": {
+		"build": "cd src-rust && cargo build --release",
+		"dev": "deno run --allow-ffi --allow-read --unstable-ffi examples/basic.ts"
+	},
+	"compilerOptions": {
+		"strict": true
+	},
+	"fmt": {
+		"useTabs": false,
+		"lineWidth": 100,
+		"indentWidth": 2,
+		"semiColons": true
+	}
 }

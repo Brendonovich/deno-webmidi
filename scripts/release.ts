@@ -2,23 +2,18 @@
 
 // deno-lint-ignore-file no-import-prefix
 import { $ } from "jsr:@david/dax@0.43.2";
-import {
-	format,
-	increment,
-	parse,
-	type ReleaseType,
-} from "jsr:@std/semver@1.0.5";
+import { format, increment, parse, type ReleaseType } from "jsr:@std/semver@1.0.5";
 import metadata from "../deno.json" with { type: "json" };
 
 function assertIsAReleaseType(
-	value: string | undefined,
+  value: string | undefined,
 ): asserts value is ReleaseType {
-	if (!(value === "major" || value === "minor" || value === "patch")) {
-		console.error(
-			`Invalid release type: ${value}. Must be major, minor, or patch.`,
-		);
-		Deno.exit(1);
-	}
+  if (!(value === "major" || value === "minor" || value === "patch")) {
+    console.error(
+      `Invalid release type: ${value}. Must be major, minor, or patch.`,
+    );
+    Deno.exit(1);
+  }
 }
 
 const releaseType = Deno.args[0];
@@ -28,24 +23,24 @@ const currentVersion = parse(metadata.version);
 const nextVersion = increment(currentVersion, releaseType);
 
 console.log(
-	`Updating version from ${format(currentVersion)} to ${format(nextVersion)}`,
+  `Updating version from ${format(currentVersion)} to ${format(nextVersion)}`,
 );
 
 if (!confirm("continue ?")) {
-	Deno.exit(0);
+  Deno.exit(0);
 }
 
 console.log("Updating deno.json");
 Deno.writeTextFileSync(
-	"deno.json",
-	JSON.stringify(
-		{
-			...metadata,
-			version: format(nextVersion),
-		},
-		null,
-		2,
-	),
+  "deno.json",
+  JSON.stringify(
+    {
+      ...metadata,
+      version: format(nextVersion),
+    },
+    null,
+    2,
+  ),
 );
 
 $.setPrintCommand(true);

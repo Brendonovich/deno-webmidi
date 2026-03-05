@@ -90,6 +90,7 @@ Implements the [W3C Web MIDI API](https://webaudio.github.io/web-midi-api/):
 ## Platform Support
 
 Cross-platform via `midir`:
+
 - ✅ Linux (ALSA)
 - ✅ macOS (CoreMIDI)
 - ✅ Windows (WinMM)

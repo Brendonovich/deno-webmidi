@@ -4,7 +4,6 @@
 import { MidiFFI } from "./ffi_bindings.ts";
 import { MIDIInput } from "./midi_input.ts";
 import { MIDIOutput } from "./midi_output.ts";
-import type { MIDIPort, MIDIPortOptions } from "./midi_port.ts";
 
 export interface MIDIAccessOptions {
   sysex?: boolean;

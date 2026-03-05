@@ -1,6 +1,8 @@
 // Main entry point for deno-webmidi
 // Exports the WebMIDI API compatible with the W3C spec
 
+import { instantiate } from "./ffi_bindings.ts";
+
 // Re-export FFI bindings for advanced usage
 export { MidiFFI } from "./ffi_bindings.ts";
 export { MIDIAccess, type MIDIAccessOptions } from "./midi_access.ts";
@@ -13,6 +15,8 @@ export {
   type MIDIPortOptions,
   type MIDIPortType,
 } from "./midi_port.ts";
+
+await instantiate();
 
 // Helper to request MIDI access (matches browser API)
 export async function requestMIDIAccess(

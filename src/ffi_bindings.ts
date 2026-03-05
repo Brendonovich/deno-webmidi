@@ -1,17 +1,8 @@
 // FFI bindings for deno-webmidi
 // Corresponds to the Rust FFI interface in ffi/src/lib.rs
 
-import { join } from "jsr:@std/path@1";
-
-// Platform-specific library extension
-function getLibPath(): string {
-  const ext = Deno.build.os === "windows" ? "dll" : Deno.build.os === "darwin" ? "dylib" : "so";
-  return join(
-    import.meta.dirname || "",
-    "../src-rust/target/release",
-    `libdeno_webmidi_ffi.${ext}`,
-  );
-}
+import * as plug from "@denosaurs/plug";
+import metadata from "../deno.json" with { type: "json" };
 
 // Type definitions for callbacks
 type PortCallback = (
@@ -19,15 +10,8 @@ type PortCallback = (
   name: Deno.PointerValue,
   isInput: boolean,
 ) => void;
-type MessageCallback = (
-  portId: Deno.PointerValue,
-  data: Deno.PointerValue,
-  len: number,
-  timestamp: bigint,
-) => void;
 
-// FFI Interface definition
-const LIBRARY = Deno.dlopen(getLibPath(), {
+const SYMBOLS = {
   // Initialization
   midir_impl_init: { parameters: ["function"], result: "bool" },
   midir_impl_shutdown: { parameters: [], result: "void" },
@@ -42,7 +26,32 @@ const LIBRARY = Deno.dlopen(getLibPath(), {
     parameters: ["pointer", "pointer", "usize"],
     result: "bool",
   },
-});
+} satisfies Deno.ForeignLibraryInterface;
+
+// --- Type alias for the dynamic library type ---
+export type MidiLib = Deno.DynamicLibrary<typeof SYMBOLS>;
+let LIBRARY: MidiLib | undefined = undefined;
+
+export function getLibrary(): MidiLib {
+  if (!LIBRARY) {
+    throw new Error("Library not instantiated. Call instantiate() first.");
+  }
+  return LIBRARY;
+}
+
+// FFI Interface definition
+
+export async function instantiate(libPath?: string): Promise<void> {
+  if (libPath) {
+    LIBRARY = Deno.dlopen(libPath, SYMBOLS);
+    return;
+  }
+
+  LIBRARY = await plug.dlopen({
+    name: "deno_webmidi",
+    url: `https://github.com/Brendonovich/deno-webmidi/releases/download/${metadata.version}`,
+  }, SYMBOLS);
+}
 
 // Helper to convert C strings to JS strings
 function cStringToJS(ptr: Deno.PointerValue): string {
@@ -101,25 +110,6 @@ const portRemoveCallback: PortCallback = (idPtr, namePtr, isInput) => {
 // Message receive callback wrapper
 const messageBuffer = new MidiMessageBuffer();
 
-const receiveCallback: MessageCallback = (
-  portIdPtr,
-  dataPtr,
-  len,
-  timestampMicros,
-) => {
-  const portId = cStringToJS(portIdPtr);
-  if (!portId || !dataPtr) return;
-
-  const data = new Uint8Array(len);
-  const view = new Deno.UnsafePointerView(dataPtr);
-  for (let i = 0; i < len; i++) {
-    data[i] = view.getUint8(i);
-  }
-
-  const timestamp = Number(timestampMicros) / 1000; // Convert to milliseconds
-  messageBuffer.addMessage(portId, data, timestamp);
-};
-
 // FFI API wrapper class
 export class MidiFFI {
   private static initialized = false;
@@ -145,13 +135,13 @@ export class MidiFFI {
       portCallback as any,
     );
 
-    const result = LIBRARY.symbols.midir_impl_init(portCallbackPtr.pointer);
+    const result = getLibrary().symbols.midir_impl_init(portCallbackPtr.pointer);
     MidiFFI.initialized = result;
     return result;
   }
 
   static shutdown(): void {
-    LIBRARY.symbols.midir_impl_shutdown();
+    getLibrary().symbols.midir_impl_shutdown();
     MidiFFI.initialized = false;
   }
 
@@ -172,7 +162,7 @@ export class MidiFFI {
       portRemoveCallback as any,
     );
 
-    LIBRARY.symbols.midir_impl_refresh(
+    getLibrary().symbols.midir_impl_refresh(
       addCallback.pointer,
       removeCallback.pointer,
     );
@@ -204,14 +194,14 @@ export class MidiFFI {
       },
     );
 
-    return LIBRARY.symbols.midir_impl_open_port(portIdPtr, msgCallback.pointer);
+    return getLibrary().symbols.midir_impl_open_port(portIdPtr, msgCallback.pointer);
   }
 
   static closePort(portId: string): boolean {
     const portIdPtr = Deno.UnsafePointer.of(
       new TextEncoder().encode(portId + "\0"),
     );
-    return LIBRARY.symbols.midir_impl_close_port(portIdPtr);
+    return getLibrary().symbols.midir_impl_close_port(portIdPtr);
   }
 
   static send(portId: string, data: Uint8Array): boolean {
@@ -220,7 +210,7 @@ export class MidiFFI {
     );
     const dataPtr = Deno.UnsafePointer.of(data as any);
 
-    return LIBRARY.symbols.midir_impl_send(portIdPtr, dataPtr, data.length as any);
+    return getLibrary().symbols.midir_impl_send(portIdPtr, dataPtr, data.length as any);
   }
 }
 

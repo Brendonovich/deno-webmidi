@@ -25,6 +25,14 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
+      - name: Setup Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config
+          if [[ "${{ matrix.setup }}" == "linux-jack" ]]; then
+            sudo apt-get install -y libjack-jackd2-dev
+          fi
+
       - name: Intall Deno
         uses: denoland/setup-deno@v2
 

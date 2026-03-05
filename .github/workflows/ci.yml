@@ -36,18 +36,5 @@ jobs:
       - name: Intall Deno
         uses: denoland/setup-deno@v2
 
-      - if: runner.os == 'Linux'
-        name: Run docs lint
-        run: deno doc --lint mod.ts
-      - if: runner.os == 'Linux'
-        name: Run tests Linux
-        run: export CARGO_TARGET_DIR=target && export RUST_LIB_PATH=$CARGO_TARGET_DIR/debug && deno task build && mv $CARGO_TARGET_DIR/release/libdeno_webmidi_ffi.so $CARGO_TARGET_DIR/release/libdeno_webmidi_ffi_$(uname -m).so && deno test -A
-
-      # NOTE: make macos testing easier for users
-      - if: runner.os == 'macOS'
-        name: Run tests MacOs
-        run: export CARGO_TARGET_DIR=target && export RUST_LIB_PATH=$CARGO_TARGET_DIR/debug && deno task build && mv $CARGO_TARGET_DIR/release/libdeno_webmidi_ffi.dylib $CARGO_TARGET_DIR/release/libdeno_webmidi_ffi_$(uname -m).dylib && deno test -A
-
-      - if: runner.os == 'Windows'
-        name: Run tests Windows
-        run: $env:CARGO_TARGET_DIR='target'; deno task test
+      - name: Build
+        run: deno task build

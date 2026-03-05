@@ -1,21 +1,21 @@
 {
-	"name": "@brendonovich/deno-webmidi",
-	"version": "0.0.1",
-	"exports": "./src/mod.ts",
-	"tasks": {
-		"build": "cd src-rust && cargo build --release",
-		"dev": "deno run --allow-ffi --allow-read --unstable-ffi examples/basic.ts"
-	},
-	"compilerOptions": {
-		"strict": true
-	},
-	"fmt": {
-		"useTabs": false,
-		"lineWidth": 100,
-		"indentWidth": 2,
-		"semiColons": true
-	},
-	"imports": {
-		"@denosaurs/plug": "jsr:@denosaurs/plug@^1.1.0"
-	}
+  "name": "@brendonovich/deno-webmidi",
+  "version": "0.0.2",
+  "exports": "./src/mod.ts",
+  "tasks": {
+    "build": "cd src-rust && cargo build --release",
+    "dev": "deno run --allow-ffi --allow-read --unstable-ffi examples/basic.ts"
+  },
+  "compilerOptions": {
+    "strict": true
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true
+  },
+  "imports": {
+    "@denosaurs/plug": "jsr:@denosaurs/plug@^1.1.0"
+  }
 }

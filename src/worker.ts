@@ -21,24 +21,24 @@ type WorkerResponse =
   }
   | { type: "error"; message: string };
 
-// (self as any).onmessage = (event: MessageEvent<WorkerMessage>) => {
-//   const msg = event.data;
+(self as any).onmessage = (event: MessageEvent<WorkerMessage>) => {
+  const msg = event.data;
 
-//   switch (msg.type) {
-//     case "start":
-//       portId = msg.portId;
-//       startPolling();
-//       break;
-//     case "stop":
-//       stopPolling();
-//       break;
-//     case "getMessages":
-//       // In real implementation, this would call FFI to get messages
-//       // For now, return empty array
-//       self.postMessage({ type: "messages", messages: [] } as WorkerResponse);
-//       break;
-//   }
-// };
+  switch (msg.type) {
+    case "start":
+      portId = msg.portId;
+      startPolling();
+      break;
+    case "stop":
+      stopPolling();
+      break;
+    case "getMessages":
+      // In real implementation, this would call FFI to get messages
+      // For now, return empty array
+      self.postMessage({ type: "messages", messages: [] } as WorkerResponse);
+      break;
+  }
+};
 
 function startPolling(): void {
   if (pollingInterval) {

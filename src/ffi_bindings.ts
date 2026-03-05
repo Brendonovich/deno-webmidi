@@ -8,7 +8,7 @@ function getLibPath(): string {
   const ext = Deno.build.os === "windows" ? "dll" : Deno.build.os === "darwin" ? "dylib" : "so";
   return join(
     import.meta.dirname || "",
-    "../../target/release",
+    "../src-rust/target/release",
     `libdeno_webmidi_ffi.${ext}`,
   );
 }
@@ -188,13 +188,15 @@ export class MidiFFI {
 
     const msgCallback = Deno.UnsafeCallback.threadSafe(
       { parameters: ["pointer", "pointer", "usize", "u64"], result: "void" },
-      (portIdPtr, dataPtr, len, timestamp) => {
+      (portIdPtr, dataPtr, _len, timestamp) => {
+        const len = Number(_len as bigint);
+        console.log({ portIdPtr, dataPtr, len, timestamp });
         const portId = cStringToJS(portIdPtr as Deno.PointerValue);
         if (!portId || !dataPtr) return;
 
-        const data = new Uint8Array(len as any);
-        const view = new Deno.UnsafePointerView(dataPtr as any);
-        for (let i = 0; i < (len as any); i++) {
+        const data = new Uint8Array(len);
+        const view = new Deno.UnsafePointerView(dataPtr as Deno.PointerObject);
+        for (let i = 0; i < len; i++) {
           data[i] = view.getUint8(i);
         }
 

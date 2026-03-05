@@ -222,10 +222,6 @@ export class MidiFFI {
 
     return LIBRARY.symbols.midir_impl_send(portIdPtr, dataPtr, data.length as any);
   }
-
-  static getReceivedMessages(portId?: string) {
-    return messageBuffer.getMessages(portId);
-  }
 }
 
 export { LIBRARY as lib, messageBuffer };
